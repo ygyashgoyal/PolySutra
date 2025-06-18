@@ -2,12 +2,13 @@
 
 import { useChat } from "ai/react";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, Suspense } from "react";
 import ReactMarkdown from "react-markdown";
 import { ArrowLeft, MessageSquare } from "lucide-react";
 import Link from "next/link";
 
-export default function ChatbotPage() {
+// Inner component to use hooks safely
+function ChatbotPageContent() {
     const searchParams = useSearchParams();
 
     const languages = searchParams.get("languages")?.split(",") || ["English"];
@@ -31,7 +32,7 @@ export default function ChatbotPage() {
         key: `${languages.join(",")}-${tone}-${length}-${contentType}-${apiKey}`,
     });
 
-    const handleSubmit = (e: any) => {
+    const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (!apiKey) {
             alert("API key missing.");
@@ -59,11 +60,9 @@ export default function ChatbotPage() {
 
     return (
         <div className="min-h-screen flex flex-col bg-blue-50 text-blue-950 relative">
-
             {/* Header */}
-            <header className=" bg-white/70 shadow-sm backdrop-blur-sm px-4 py-3 flex items-center justify-between">
+            <header className="bg-white/70 shadow-sm backdrop-blur-sm px-4 py-3 flex items-center justify-between">
                 <div className="flex items-center gap-1">
-                    {/* Back Button */}
                     <Link
                         href="/"
                         aria-label="Back to home"
@@ -71,8 +70,6 @@ export default function ChatbotPage() {
                     >
                         <ArrowLeft size={20} />
                     </Link>
-
-                    {/* Reconfigure Link */}
                     <Link
                         href="/"
                         className="text-blue-950 font-semibold hover:underline"
@@ -109,8 +106,8 @@ export default function ChatbotPage() {
                             <div
                                 key={m.id}
                                 className={`relative p-4 rounded-xl border transition ${m.role === "user"
-                                    ? "bg-white border-blue-100"
-                                    : "bg-white border-blue-300"
+                                        ? "bg-white border-blue-100"
+                                        : "bg-white border-blue-300"
                                     }`}
                             >
                                 {m.role === "user" && (
@@ -131,12 +128,11 @@ export default function ChatbotPage() {
                             </div>
                         ))
                     )}
-
                     <div ref={bottomRef} />
                 </div>
             </main>
 
-            {/* Input Footer */}
+            {/* Footer */}
             <footer className="fixed bottom-0 left-0 w-full border-t border-blue-200 bg-white/80 backdrop-blur-md px-4 sm:px-6 py-4 z-10">
                 <form
                     onSubmit={handleSubmit}
@@ -159,5 +155,14 @@ export default function ChatbotPage() {
                 </form>
             </footer>
         </div>
+    );
+}
+
+// Outer component to wrap with Suspense
+export default function ChatbotPage() {
+    return (
+        <Suspense fallback={<div className="p-6 text-center text-blue-700">Loading chatbot...</div>}>
+            <ChatbotPageContent />
+        </Suspense>
     );
 }
